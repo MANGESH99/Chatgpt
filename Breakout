@@ -1,0 +1,82 @@
+pip install pygame
+
+import pygame
+import random
+
+# Initialize Pygame
+pygame.init()
+
+# Screen dimensions
+screen_width = 800
+screen_height = 600
+screen = pygame.display.set_mode((screen_width, screen_height))
+
+# Colors
+black = (0, 0, 0)
+white = (255, 255, 255)
+colors = [(255, 0, 0), (255, 127, 0), (255, 255, 0), (0, 255, 0), (0, 0, 255), (75, 0, 130), (148, 0, 211)]
+
+# Paddle
+paddle_width = 100
+paddle_height = 10
+paddle_speed = 7
+paddle = pygame.Rect(screen_width // 2 - paddle_width // 2, screen_height - 30, paddle_width, paddle_height)
+
+# Ball
+ball_size = 10
+ball = pygame.Rect(screen_width // 2 - ball_size // 2, screen_height // 2 - ball_size // 2, ball_size, ball_size)
+ball_speed = [random.choice([5, -5]), -5]
+
+# Bricks
+brick_rows = 6
+brick_cols = 10
+brick_width = screen_width // brick_cols
+brick_height = 30
+bricks = []
+for row in range(brick_rows):
+    for col in range(brick_cols):
+        bricks.append(pygame.Rect(col * brick_width, row * brick_height, brick_width, brick_height))
+
+# Main loop
+running = True
+clock = pygame.time.Clock()
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT] and paddle.left > 0:
+        paddle.left -= paddle_speed
+    if keys[pygame.K_RIGHT] and paddle.right < screen_width:
+        paddle.right += paddle_speed
+
+    ball.left += ball_speed[0]
+    ball.top += ball_speed[1]
+
+    if ball.left <= 0 or ball.right >= screen_width:
+        ball_speed[0] = -ball_speed[0]
+    if ball.top <= 0:
+        ball_speed[1] = -ball_speed[1]
+    if ball.colliderect(paddle):
+        ball_speed[1] = -ball_speed[1]
+
+    hit_index = ball.collidelist(bricks)
+    if hit_index != -1:
+        hit_rect = bricks.pop(hit_index)
+        ball_speed[1] = -ball_speed[1]
+        
+    if ball.top > screen_height:
+        ball = pygame.Rect(screen_width // 2 - ball_size // 2, screen_height // 2 - ball_size // 2, ball_size, ball_size)
+        ball_speed = [random.choice([5, -5]), -5]
+
+    screen.fill(black)
+    pygame.draw.rect(screen, white, paddle)
+    pygame.draw.ellipse(screen, white, ball)
+    for brick in bricks:
+        pygame.draw.rect(screen, colors[bricks.index(brick) // brick_cols], brick)
+
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
